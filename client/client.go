@@ -1,7 +1,9 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
+	"flaco/grpc_and_go/flaco_grpc"
 	"fmt"
 	"log"
 	"os"
@@ -10,15 +12,33 @@ import (
 	"google.golang.org/grpc"
 )
 
-func Connect(addr string) error {
+type DeviceOperation struct {
+	Type         string `json:"type"`
+	HasSucceeded bool   `json:"has_succeeded"`
+}
 
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+type DeviceData struct {
+	DeviceName string            `json:"device_name"`
+	Operations []DeviceOperation `json:"operations"`
+}
+
+//localhost:8080
+func Connect(addr string) {
+
+	devices := GetDeviceData("./donnees/")
+
+	conn, err := grpc.Dial(addr)
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
+
 	defer conn.Close()
 
-	return nil
+	client := flaco_grpc.NewDayServiceClient(&grpc.ClientConn{})
+
+	client.SendDayInfoToServer(context.Background(), &flaco_grpc.Request{
+		Device: devices,
+	})
 }
 
 func ReadDeviceDataFromFiles(pathString string) ([]string, error) {

@@ -9,7 +9,7 @@ import (
 )
 
 type Server struct {
-	flaco_grpc.UnimplementedMarketServiceServer
+	flaco_grpc.UnimplementedDayServiceServer
 }
 
 func StoreToDatabase(DeviceInfo *flaco_grpc.Request) error {
@@ -28,12 +28,10 @@ func StoreToDatabase(DeviceInfo *flaco_grpc.Request) error {
 	return nil
 }
 
-
 func (s Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Request) (*flaco_grpc.Response, error) {
 	DeviceInfo := flaco_grpc.Request{
 		Device: req.GetDevice(),
 	}
-
 
 	err := StoreToDatabase(&DeviceInfo)
 	if err != nil {
@@ -43,8 +41,6 @@ func (s Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Request
 	return nil, nil
 }
 
-func main(){
+func main() {
 
-
-	}	
-
+}

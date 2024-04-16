@@ -19,4 +19,6 @@ func main() {
 		fmt.Println(devices)
 	}
 
+	client.Connect("localhost:8080")
+
 }
