@@ -3,9 +3,23 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+
+	"google.golang.org/grpc"
 )
+
+func Connect(addr string) error {
+
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("fail to dial: %v", err)
+	}
+	defer conn.Close()
+
+	return nil
+}
 
 func ReadDeviceDataFromFiles(pathString string) ([]string, error) {
 	var paths []string

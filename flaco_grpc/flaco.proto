@@ -20,6 +20,6 @@ message Operation{
 
 message Response {}
 
-service MarketService {
+service DayService {
     rpc SendDayInfoToServer (Request) returns (Response);
 }
