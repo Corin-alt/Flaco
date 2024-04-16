@@ -1,0 +1,25 @@
+syntax="proto3";
+
+option go_package="flaco/GRPC_AND_GO/flaco_grpc";
+
+
+
+message Request {
+    repeated Device device = 2;
+}
+
+message Device {
+    string device_name = 1;
+    repeated Operation operation = 2;
+}
+
+message Operation{
+    string type = 1; 
+    string has_succeeded = 2; 
+}
+
+message Response {}
+
+service MarketService {
+    rpc SendDayInfoToServer (Request) returns (Response);
+}
