@@ -22,7 +22,7 @@ type DeviceData struct {
 	Operations []DeviceOperation `json:"operations"`
 }
 
-//localhost:8080
+// 0.0.0.0:8082
 func Connect(addr string) {
 
 	devices := GetDeviceData("./donnees/")
@@ -34,10 +34,16 @@ func Connect(addr string) {
 
 	defer conn.Close()
 
-	client := flaco_grpc.NewDayServiceClient(&grpc.ClientConn{})
+	client := flaco_grpc.NewDayServiceClient(conn)
+
+	var devicesCconverted []*flaco_grpc.Device
+
+	for i := 0; i < len(devices); i++ {
+		devicesCconverted = append(devicesCconverted, ConvertDeviceDataToGRPCDevice(devices[i]))
+	}
 
 	client.SendDayInfoToServer(context.Background(), &flaco_grpc.Request{
-		Device: devices,
+		Device: devicesCconverted,
 	})
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	paths, err := client.ReadDeviceDataFromFiles("./data/")
+	paths, err := client.ReadDeviceDataFromFiles("./donnees/")
 
 	if err != nil {
 		log.Fatal(err)
@@ -18,7 +18,5 @@ func main() {
 		fmt.Println("File : " + paths[i])
 		fmt.Println(devices)
 	}
-
-	client.Connect("localhost:8080")
 
 }
