@@ -4,7 +4,7 @@ option go_package="flaco/GRPC_AND_GO/flaco_grpc";
 
 
 
-message Request {
+message Request {   
     repeated Device device = 1;
 }
 

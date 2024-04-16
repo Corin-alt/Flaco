@@ -3,9 +3,12 @@ package serveur
 import (
 	"context"
 	"flaco/grpc_and_go/flaco_grpc"
+	"log"
+	"net"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc"
 )
 
 type Server struct {
@@ -28,10 +31,12 @@ func StoreToDatabase(DeviceInfo *flaco_grpc.Request) error {
 	return nil
 }
 
+
 func (s Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Request) (*flaco_grpc.Response, error) {
 	DeviceInfo := flaco_grpc.Request{
 		Device: req.GetDevice(),
 	}
+
 
 	err := StoreToDatabase(&DeviceInfo)
 	if err != nil {
@@ -41,6 +46,20 @@ func (s Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Request
 	return nil, nil
 }
 
-func main() {
+func ServeurListen() {
+
+	listener, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		panic(err)
+	}
+
+	s := grpc.NewServer()
+	flaco_grpc.RegisterDayServiceServer(s, &Server{})
+	if err := s.Serve(listener); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+
 
 }
+
+
