@@ -15,9 +15,9 @@ type Server struct {
 	flaco_grpc.UnimplementedDayServiceServer
 }
 type CompletedDeviceInfo struct {
- 	 devices	[]*flaco_grpc.Device 
-	 nbTotalOp  int64
-	 nbOpFailed int64
+	devices    []*flaco_grpc.Device
+	nbTotalOp  int64
+	nbOpFailed int64
 }
 
 func StoreToDatabase(DeviceInfo *flaco_grpc.Request) error {
@@ -26,8 +26,8 @@ func StoreToDatabase(DeviceInfo *flaco_grpc.Request) error {
 	if err != nil {
 		return err
 	}
-	var CompletedDevice *CompletedDeviceInfo;
-	CompletedDevice=CalculVal(DeviceInfo);
+
+	CompletedDevice := CalculVal(DeviceInfo)
 
 	for _, DeviceInfoComp := range CompletedDevice.devices {
 		coll := client.Database("flaco").Collection(DeviceInfoComp.DeviceName)
@@ -47,16 +47,13 @@ func StoreToDatabase(DeviceInfo *flaco_grpc.Request) error {
 		return err
 	}
 
-
 	return nil
 }
-
 
 func (s Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Request) (*flaco_grpc.Response, error) {
 	DeviceInfo := flaco_grpc.Request{
 		Device: req.GetDevice(),
 	}
-
 
 	err := StoreToDatabase(&DeviceInfo)
 	if err != nil {
@@ -66,37 +63,27 @@ func (s Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Request
 	return nil, nil
 }
 
-func CalculVal(DeviceInfo *flaco_grpc.Request) *CompletedDeviceInfo{
-
-	nbTotal :=0; 
-	nbFailed := 0;
+func CalculVal(DeviceInfo *flaco_grpc.Request) *CompletedDeviceInfo {
+	nbTotal := 0
+	nbFailed := 0
 
 	for _, DeviceInfo := range DeviceInfo.Device {
-
 		for _, Operation := range DeviceInfo.Operation {
-
 			if !Operation.HasSucceeded {
 				nbFailed++
 			}
 			nbTotal++
-
 		}
-			
 	}
 
-	var CompletedDevice *CompletedDeviceInfo;
-
-	CompletedDevice.devices=DeviceInfo.Device;
-	CompletedDevice.nbOpFailed=int64(nbFailed);
-	CompletedDevice.nbTotalOp=int64(nbTotal);
-
-	return CompletedDevice
-
-
+	return &CompletedDeviceInfo{
+		devices:    DeviceInfo.Device,
+		nbOpFailed: int64(nbFailed),
+		nbTotalOp:  int64(nbTotal),
+	}
 }
 
 func ServeurListen() {
-
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		panic(err)
@@ -107,8 +94,4 @@ func ServeurListen() {
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-
-
 }
-
-
