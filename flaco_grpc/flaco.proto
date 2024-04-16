@@ -15,7 +15,7 @@ message Device {
 
 message Operation{
     string type = 1; 
-    string has_succeeded = 2; 
+    bool has_succeeded = 2; 
 }
 
 message Response {}
