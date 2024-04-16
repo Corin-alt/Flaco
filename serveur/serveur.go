@@ -14,6 +14,11 @@ import (
 type Server struct {
 	flaco_grpc.UnimplementedDayServiceServer
 }
+type CompletedDeviceInfo struct {
+ 	 devices	[]*flaco_grpc.Device 
+	 nbTotalOp  int64
+	 nbOpFailed int64
+}
 
 func StoreToDatabase(DeviceInfo *flaco_grpc.Request) error {
 	client, err := mongo.Connect(context.Background(),
@@ -21,13 +26,28 @@ func StoreToDatabase(DeviceInfo *flaco_grpc.Request) error {
 	if err != nil {
 		return err
 	}
-	for _, DeviceInfo := range DeviceInfo.Device {
-		coll := client.Database("flaco").Collection(DeviceInfo.DeviceName)
-		_, err = coll.InsertOne(context.Background(), DeviceInfo, nil)
+	var CompletedDevice *CompletedDeviceInfo;
+	CompletedDevice=CalculVal(DeviceInfo);
+
+	for _, DeviceInfoComp := range CompletedDevice.devices {
+		coll := client.Database("flaco").Collection(DeviceInfoComp.DeviceName)
+		_, err = coll.InsertOne(context.Background(), DeviceInfoComp, nil)
 		if err != nil {
 			return err
 		}
 	}
+
+	coll := client.Database("flaco").Collection("Information_Calculs")
+	_, err = coll.InsertOne(context.Background(), CompletedDevice.nbTotalOp, nil)
+	if err != nil {
+		return err
+	}
+	_, err = coll.InsertOne(context.Background(), CompletedDevice.nbOpFailed, nil)
+	if err != nil {
+		return err
+	}
+
+
 	return nil
 }
 
@@ -44,6 +64,35 @@ func (s Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Request
 	}
 
 	return nil, nil
+}
+
+func CalculVal(DeviceInfo *flaco_grpc.Request) *CompletedDeviceInfo{
+
+	nbTotal :=0; 
+	nbFailed := 0;
+
+	for _, DeviceInfo := range DeviceInfo.Device {
+
+		for _, Operation := range DeviceInfo.Operation {
+
+			if !Operation.HasSucceeded {
+				nbFailed++
+			}
+			nbTotal++
+
+		}
+			
+	}
+
+	var CompletedDevice *CompletedDeviceInfo;
+
+	CompletedDevice.devices=DeviceInfo.Device;
+	CompletedDevice.nbOpFailed=int64(nbFailed);
+	CompletedDevice.nbTotalOp=int64(nbTotal);
+
+	return CompletedDevice
+
+
 }
 
 func ServeurListen() {
