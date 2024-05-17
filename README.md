@@ -23,7 +23,7 @@ go mod tidy
 # Run docker-compose
 docker-compose up --build
 
-#Run main file
+# Run main file
 go run main.go
 ```
 

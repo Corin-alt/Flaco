@@ -1,9 +1,8 @@
-package client
+package serveur
 
 import (
 	"context"
 	"flaco/grpc_and_go/flaco_grpc"
-	"flaco/grpc_and_go/serveur"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -21,7 +20,7 @@ func TestCalculateValuesWithNoFailedOperations(t *testing.T) {
 	}
 
 	// Calling CalculateValues function with the test request
-	result := serveur.CalculateValues(req)
+	result := CalculateValues(req)
 	expectedTotal := int64(2)
 	expectedFailed := int64(0)
 
@@ -45,7 +44,7 @@ func TestCalculateValuesWithFailedOperations(t *testing.T) {
 	}
 
 	// Calling CalculateValues function with the test request
-	result := serveur.CalculateValues(req)
+	result := CalculateValues(req)
 	expectedTotal := int64(2)
 	expectedFailed := int64(1)
 
@@ -82,7 +81,7 @@ func TestStoreToDatabaseSuccessful(t *testing.T) {
 	}
 
 	// Storing data to the database
-	err = serveur.StoreToDatabase(req)
+	err = StoreToDatabase(req)
 	if err != nil {
 		t.Errorf("Error storing to database: %v", err)
 	}
@@ -124,7 +123,7 @@ func TestStoreToDatabaseFailed(t *testing.T) {
 	}
 
 	// Attempting to store data to the database (which should fail)
-	err = serveur.StoreToDatabase(req)
+	err = StoreToDatabase(req)
 	if err == nil {
 		t.Log("Expected error storing to database, got nil")
 	} else {
@@ -137,7 +136,7 @@ func TestStoreToDatabaseEmptyRequest(t *testing.T) {
 	req := &flaco_grpc.Request{} // Creating an empty request
 
 	// Attempting to store data to the database
-	err := serveur.StoreToDatabase(req)
+	err := StoreToDatabase(req)
 	if err == nil {
 		t.Log("Expected error for empty request, got nil")
 	} else {
@@ -148,7 +147,7 @@ func TestStoreToDatabaseEmptyRequest(t *testing.T) {
 // TestStoreToDatabaseNilRequest tests storing data to a MongoDB database with a nil request.
 func TestStoreToDatabaseNilRequest(t *testing.T) {
 	// Attempting to store data to the database with a nil request
-	err := serveur.StoreToDatabase(nil)
+	err := StoreToDatabase(nil)
 	if err == nil {
 		t.Log("Expected error for nil request, got nil")
 	} else {
@@ -161,7 +160,7 @@ func TestStoreToDatabaseNoDevices(t *testing.T) {
 	req := &flaco_grpc.Request{} // Creating a request with no devices
 
 	// Attempting to store data to the database
-	err := serveur.StoreToDatabase(req)
+	err := StoreToDatabase(req)
 	if err == nil {
 		t.Log("Expected error for request with no devices, got nil")
 	} else {
@@ -176,7 +175,7 @@ func TestStoreToDatabaseNoOperations(t *testing.T) {
 	}
 
 	// Attempting to store data to the database
-	err := serveur.StoreToDatabase(req)
+	err := StoreToDatabase(req)
 	if err == nil {
 		t.Log("Expected error for request with no operations, got nil")
 	} else {
@@ -195,7 +194,7 @@ func TestStoreToDatabaseDuplicateDeviceName(t *testing.T) {
 	}
 
 	// Attempting to store data to the database
-	err := serveur.StoreToDatabase(req)
+	err := StoreToDatabase(req)
 	if err == nil {
 		t.Log("Expected error for request with duplicate device names, got nil")
 	} else {
@@ -213,7 +212,7 @@ func TestStoreToDatabaseInvalidOperationType(t *testing.T) {
 	}
 
 	// Attempting to store data to the database
-	err := serveur.StoreToDatabase(req)
+	err := StoreToDatabase(req)
 	if err == nil {
 		t.Log("Expected error for request with invalid operation type, got nil")
 	} else {

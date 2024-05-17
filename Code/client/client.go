@@ -95,10 +95,6 @@ func GetDeviceData(dirPath string) ([]DeviceData, error) {
 		// Unmarshal the JSON data into a slice of DeviceData
 		var deviceData []DeviceData
 		err = json.Unmarshal(jsonData, &deviceData)
-		if err != nil {
-			fmt.Println("[LOGS] => Error decoding JSON:", err)
-			return nil, err
-		}
 		// Append the device data to the devices slice
 		devices = append(devices, deviceData...)
 	}
