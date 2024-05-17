@@ -7,11 +7,15 @@
 client/client.go,8\2\82fb43e3926d3cd5f985f528195aab7d54f9539a
 B
 serveur/serveur.go,4\e\4ed2d8839c3ca176f1a45ffa3824a652d837738d
->
-client/util.go,5\b\5be613c93d8a3d79e605d839cfe0316d6795532f
 B
 docker-compose.yml,3\5\35b8c13cf2eb2a194eada000eb310d65aed53b2a
 F
 donnees/journee_1.json,4\e\4e83681ff005f25defaac0f8949ab20291c3e2c7
 F
 flaco_grpc/flaco.proto,f\c\fcbe516af76cacdd4439abca87ad76bb1316644e
+E
+client/client_test.go,2\8\28a1869372f198ed109508a84e68f6f1a44c492c
+G
+serveur/serveur_test.go,9\a\9a5816b2c7877dadd94310e35c8f142f583d80d7
+D
+tests/client_test.go,b\6\b625793bd51677b1d8c97f64605a3c44e0f6d63e
