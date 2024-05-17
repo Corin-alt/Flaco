@@ -15,14 +15,15 @@ Git of a GO project using GRPC in the RT0805 module of the Master DAS in Reims
 
 ```bash
 
-# Go to the "Code" folder:
+# Go to the "Code" folder
 cd Code/
 
 go mod tidy
 
-# Run docker-compose:
+# Run docker-compose
 docker-compose up --build
 
+#Run main file
 go run main.go
 ```
 
@@ -31,9 +32,12 @@ go run main.go
 
 
 ```bash
-Go to the "Code" folder:
+# Go to the "Code" folder
 cd Code/
 
+# Run client test file
 go test tests/client_test.go
+
+# Run server test file
 go test tests/serveur_test.go
 ```
