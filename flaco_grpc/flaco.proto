@@ -2,9 +2,7 @@ syntax="proto3";
 
 option go_package="flaco/GRPC_AND_GO/flaco_grpc";
 
-
-
-message Request {   
+message Request {
     repeated Device device = 1;
 }
 
@@ -14,8 +12,8 @@ message Device {
 }
 
 message Operation{
-    string type = 1; 
-    bool has_succeeded = 2; 
+    string type = 1;
+    bool has_succeeded = 2;
 }
 
 message Response {}

@@ -2,21 +2,17 @@ package main
 
 import (
 	"flaco/grpc_and_go/client"
-	"fmt"
-	"log"
+	"flaco/grpc_and_go/serveur"
+	"time"
 )
 
 func main() {
-	paths, err := client.ReadDeviceDataFromFiles("./donnees/")
+	//run server
+	go serveur.Connect()
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	//wait 10 seconds
+	time.Sleep(5 * time.Second)
 
-	for i := 0; i < len(paths); i++ {
-		devices := client.GetDeviceData(paths[i])
-		fmt.Println("File : " + paths[i])
-		fmt.Println(devices)
-	}
-
+	//run client
+	client.NewClient("0.0.0.0:8082")
 }
