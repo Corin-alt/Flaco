@@ -7,12 +7,7 @@ import (
 )
 
 func main() {
-	//run server
-	go serveur.Connect()
-
-	//wait 10 seconds
-	time.Sleep(5 * time.Second)
-
-	//run client
-	client.NewClient("0.0.0.0:8082")
+	go serveur.Connect()             // Start the gRPC server in a goroutine
+	time.Sleep(5 * time.Second)      // Wait for 5 seconds to ensure the server is up and running
+	client.NewClient("0.0.0.0:8082") // Connect the gRPC client to the server
 }

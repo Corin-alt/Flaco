@@ -30,7 +30,7 @@ func (s *Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Reques
 	if err != nil {
 		return nil, err // Return an error if storage fails
 	}
-	return &flaco_grpc.Response{}, nil // Return an empty response on
+	return &flaco_grpc.Response{}, nil // Return an empty response
 }
 
 // StoreToDatabase connects to the database and stores the device data and calculated values
