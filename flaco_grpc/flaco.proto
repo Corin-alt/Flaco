@@ -1,23 +1,29 @@
-syntax="proto3";
+syntax = "proto3";
 
-option go_package="flaco/GRPC_AND_GO/flaco_grpc";
+option go_package = "flaco/GRPC_AND_GO/flaco_grpc"; // Specifies the Go package name for generated code
 
+// Request message for sending device information to the server
 message Request {
-    repeated Device device = 1;
+    repeated Device device = 1; // List of devices with their operations
 }
 
+// Device message representing a device and its operations
 message Device {
-    string device_name = 1;
-    repeated Operation operation = 2;
+    string device_name = 1; // Name of the device
+    repeated Operation operation = 2; // List of operations performed on the device
 }
 
-message Operation{
-    string type = 1;
-    bool has_succeeded = 2;
+// Operation message representing an operation performed on a device
+message Operation {
+    string type = 1; // Type of the operation
+    bool has_succeeded = 2; // Success status of the operation
 }
 
+// Response message returned by the server
 message Response {}
 
+// Definition of the DayService service
 service DayService {
+    // RPC method for sending device information to the server
     rpc SendDayInfoToServer (Request) returns (Response);
 }

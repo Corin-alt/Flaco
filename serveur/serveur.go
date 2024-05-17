@@ -42,6 +42,8 @@ func StoreToDatabase(req *flaco_grpc.Request) error {
 
 	completedDevice := CalculateValues(req) // Calculate the total and failed operations
 
+	println("[LOGS] => Storing information into database...")
+
 	// Store each device's information in the database
 	for _, deviceInfo := range req.GetDevice() {
 		for _, operation := range deviceInfo.Operation {

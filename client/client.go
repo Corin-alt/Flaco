@@ -52,7 +52,7 @@ func NewClient(addr string) {
 	// Send the converted device data to the server
 	_, err = client.SendDayInfoToServer(context.Background(), &flaco_grpc.Request{Device: devicesConverted})
 	if err != nil {
-		fmt.Println("Error sending data to server:", err) // Print error if the request fails
+		fmt.Println("[LOGS] => Error sending data to server:", err) // Print error if the request fails
 	}
 }
 
@@ -62,11 +62,11 @@ func ReadDeviceDataFromFiles(pathString string) ([]string, error) {
 	// Walk through the directory and collect all file paths
 	err := filepath.Walk(pathString, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println("Error during file walk:", err)
+			fmt.Println("[LOGS] => Error during file walk:", err)
 			return err // Return the error encountered during file traversal
 		}
 		if !info.IsDir() {
-			fmt.Printf("File found: %s\n", path)
+			fmt.Printf("[LOGS] => File found: %s\n", path)
 			paths = append(paths, path) // Add file path to the list if it's not a directory
 		}
 		return nil
@@ -89,14 +89,14 @@ func GetDeviceData(dirPath string) ([]DeviceData, error) {
 		// Read the JSON file from the given path
 		jsonData, err := os.ReadFile(path)
 		if err != nil {
-			fmt.Println("Error reading file:", err)
+			fmt.Println("[LOGS] => Error reading file:", err)
 			return nil, err
 		}
 		// Unmarshal the JSON data into a slice of DeviceData
 		var deviceData []DeviceData
 		err = json.Unmarshal(jsonData, &deviceData)
 		if err != nil {
-			fmt.Println("Error decoding JSON:", err)
+			fmt.Println("[LOGS] => Error decoding JSON:", err)
 			return nil, err
 		}
 		// Append the device data to the devices slice
