@@ -6,87 +6,73 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 	"testing"
 )
 
-// TestCalculateValuesWithNoFailedOperations tests the calculation of values when all operations have succeeded.
-func TestCalculateValuesWithNoFailedOperations(t *testing.T) {
-	// Creating a test request with successful operations
-	req := &flaco_grpc.Request{
-		Device: []*flaco_grpc.Device{
-			{Operation: []*flaco_grpc.Operation{{HasSucceeded: true}, {HasSucceeded: true}}},
-		},
+// TestGetDeviceStatNoFailedOperations tests the calculation of device statistics when all operations have succeeded.
+func TestGetDeviceStatNoFailedOperations(t *testing.T) {
+	device := &flaco_grpc.Device{
+		DeviceName: "device1",
+		Operation:  []*flaco_grpc.Operation{{HasSucceeded: true}, {HasSucceeded: true}},
 	}
 
-	// Calling CalculateValues function with the test request
-	result := CalculateValues(req)
+	stat := GetDeviceStat(device)
 	expectedTotal := int64(2)
 	expectedFailed := int64(0)
 
-	// Checking if the calculated values match the expected values
-	if result.NbTotalOp != expectedTotal {
-		t.Errorf("Expected total operations: %d, got: %d", expectedTotal, result.NbTotalOp)
+	if stat.NbTotalOp != expectedTotal {
+		t.Errorf("Expected total operations: %d, got: %d", expectedTotal, stat.NbTotalOp)
 	}
 
-	if result.NbOpFailed != expectedFailed {
-		t.Errorf("Expected failed operations: %d, got: %d", expectedFailed, result.NbOpFailed)
+	if stat.NbOpFailed != expectedFailed {
+		t.Errorf("Expected failed operations: %d, got: %d", expectedFailed, stat.NbOpFailed)
 	}
 }
 
-// TestCalculateValuesWithFailedOperations tests the calculation of values when some operations have failed.
-func TestCalculateValuesWithFailedOperations(t *testing.T) {
-	// Creating a test request with one successful and one failed operation
-	req := &flaco_grpc.Request{
-		Device: []*flaco_grpc.Device{
-			{Operation: []*flaco_grpc.Operation{{HasSucceeded: true}, {HasSucceeded: false}}},
-		},
+// TestGetDeviceStatWithFailedOperations tests the calculation of device statistics when some operations have failed.
+func TestGetDeviceStatWithFailedOperations(t *testing.T) {
+	device := &flaco_grpc.Device{
+		DeviceName: "device1",
+		Operation:  []*flaco_grpc.Operation{{HasSucceeded: true}, {HasSucceeded: false}},
 	}
 
-	// Calling CalculateValues function with the test request
-	result := CalculateValues(req)
+	stat := GetDeviceStat(device)
 	expectedTotal := int64(2)
 	expectedFailed := int64(1)
 
-	// Checking if the calculated values match the expected values
-	if result.NbTotalOp != expectedTotal {
-		t.Errorf("Expected total operations: %d, got: %d", expectedTotal, result.NbTotalOp)
+	if stat.NbTotalOp != expectedTotal {
+		t.Errorf("Expected total operations: %d, got: %d", expectedTotal, stat.NbTotalOp)
 	}
 
-	if result.NbOpFailed != expectedFailed {
-		t.Errorf("Expected failed operations: %d, got: %d", expectedFailed, result.NbOpFailed)
+	if stat.NbOpFailed != expectedFailed {
+		t.Errorf("Expected failed operations: %d, got: %d", expectedFailed, stat.NbOpFailed)
 	}
 }
 
 // TestStoreToDatabaseSuccessful tests storing data to a MongoDB database with a successful connection.
 func TestStoreToDatabaseSuccessful(t *testing.T) {
-	// Connecting to MongoDB database
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://root:root@localhost:27017/"))
 	if err != nil {
 		t.Errorf("Failed to connect to database: %v", err)
 	}
 	defer client.Disconnect(context.Background())
 
-	// Dropping the existing 'flaco' database
 	err = client.Database("flaco").Drop(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		t.Errorf("Failed to drop database: %v", err)
 	}
 
-	// Creating a test request with a successful operation
 	req := &flaco_grpc.Request{
 		Device: []*flaco_grpc.Device{
-			{DeviceName: "test_device", Operation: []*flaco_grpc.Operation{{HasSucceeded: true}}},
+			{DeviceName: "test_device", Operation: []*flaco_grpc.Operation{{Type: "type1", HasSucceeded: true}}},
 		},
 	}
 
-	// Storing data to the database
 	err = StoreToDatabase(req)
 	if err != nil {
 		t.Errorf("Error storing to database: %v", err)
 	}
 
-	// Checking the number of documents in the collection
 	collection := client.Database("flaco").Collection("test_device")
 	count, err := collection.CountDocuments(context.Background(), bson.M{})
 	if err != nil {
@@ -98,94 +84,77 @@ func TestStoreToDatabaseSuccessful(t *testing.T) {
 		t.Errorf("Expected %d documents in collection, got %d", expectedCount, count)
 	}
 
-	// Dropping the existing 'flaco' database
 	err = client.Database("flaco").Drop(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		t.Errorf("Failed to drop database: %v", err)
 	}
 }
 
-// TestStoreToDatabaseFailed tests storing data to a MongoDB database with a failed connection attempt.
-func TestStoreToDatabaseFailed(t *testing.T) {
-	// Attempting to connect to MongoDB database with a bad URI
+// TestStoreToDatabaseFailedConnection tests storing data to a MongoDB database with a failed connection attempt.
+func TestStoreToDatabaseFailedConnection(t *testing.T) {
 	badURI := "mongodb://root:root@db:27017/"
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(badURI))
-	if err != nil {
-		t.Errorf("Failed to connect to database: %v", err)
+	if err == nil {
+		client.Disconnect(context.Background())
+		t.Log("Expected connection to fail, but it succeeded")
+		t.Failed()
 	}
-	defer client.Disconnect(context.Background())
 
-	// Creating a test request with a successful operation
 	req := &flaco_grpc.Request{
 		Device: []*flaco_grpc.Device{
 			{DeviceName: "test_device", Operation: []*flaco_grpc.Operation{{HasSucceeded: true}}},
 		},
 	}
 
-	// Attempting to store data to the database (which should fail)
 	err = StoreToDatabase(req)
 	if err == nil {
-		t.Log("Expected error storing to database, got nil")
-	} else {
 		t.Failed()
 	}
 }
 
 // TestStoreToDatabaseEmptyRequest tests storing data to a MongoDB database with an empty request.
 func TestStoreToDatabaseEmptyRequest(t *testing.T) {
-	req := &flaco_grpc.Request{} // Creating an empty request
+	req := &flaco_grpc.Request{}
 
-	// Attempting to store data to the database
 	err := StoreToDatabase(req)
-	if err == nil {
-		t.Log("Expected error for empty request, got nil")
-	} else {
-		t.Failed()
+	if err != nil {
+		t.Errorf("Expected no error for empty request, got: %v", err)
 	}
 }
 
 // TestStoreToDatabaseNilRequest tests storing data to a MongoDB database with a nil request.
 func TestStoreToDatabaseNilRequest(t *testing.T) {
-	// Attempting to store data to the database with a nil request
 	err := StoreToDatabase(nil)
 	if err == nil {
 		t.Log("Expected error for nil request, got nil")
-	} else {
 		t.Failed()
 	}
 }
 
 // TestStoreToDatabaseNoDevices tests storing data to a MongoDB database with a request containing no devices.
 func TestStoreToDatabaseNoDevices(t *testing.T) {
-	req := &flaco_grpc.Request{} // Creating a request with no devices
+	req := &flaco_grpc.Request{}
 
-	// Attempting to store data to the database
 	err := StoreToDatabase(req)
-	if err == nil {
-		t.Log("Expected error for request with no devices, got nil")
-	} else {
-		t.Failed()
+	if err != nil {
+		t.Errorf("Expected no error for request with no devices, got: %v", err)
 	}
 }
 
 // TestStoreToDatabaseNoOperations tests storing data to a MongoDB database with a request containing devices but no operations.
 func TestStoreToDatabaseNoOperations(t *testing.T) {
 	req := &flaco_grpc.Request{
-		Device: []*flaco_grpc.Device{{}}, // Creating a request with devices but no operations
+		Device: []*flaco_grpc.Device{{DeviceName: "test_device"}},
 	}
 
-	// Attempting to store data to the database
 	err := StoreToDatabase(req)
-	if err == nil {
-		t.Log("Expected error for request with no operations, got nil")
-	} else {
-		t.Failed()
+	if err != nil {
+		t.Errorf("Expected no error for request with no operations, got: %v", err)
 	}
 }
 
 // TestStoreToDatabaseDuplicateDeviceName tests storing data to a MongoDB database with duplicate device names in the request.
 func TestStoreToDatabaseDuplicateDeviceName(t *testing.T) {
-	// Creating a request with duplicate device names and successful operations
 	req := &flaco_grpc.Request{
 		Device: []*flaco_grpc.Device{
 			{DeviceName: "test_device", Operation: []*flaco_grpc.Operation{{HasSucceeded: true}}},
@@ -193,29 +162,22 @@ func TestStoreToDatabaseDuplicateDeviceName(t *testing.T) {
 		},
 	}
 
-	// Attempting to store data to the database
 	err := StoreToDatabase(req)
-	if err == nil {
-		t.Log("Expected error for request with duplicate device names, got nil")
-	} else {
-		t.Failed()
+	if err != nil {
+		t.Errorf("Expected no error for request with duplicate device names, got: %v", err)
 	}
 }
 
 // TestStoreToDatabaseInvalidOperationType tests storing data to a MongoDB database with invalid operation types in the request.
 func TestStoreToDatabaseInvalidOperationType(t *testing.T) {
-	// Creating a request with invalid operation type
 	req := &flaco_grpc.Request{
 		Device: []*flaco_grpc.Device{
-			{Operation: []*flaco_grpc.Operation{{Type: "invalid_type"}}},
+			{DeviceName: "test_device", Operation: []*flaco_grpc.Operation{{Type: "", HasSucceeded: true}}},
 		},
 	}
 
-	// Attempting to store data to the database
 	err := StoreToDatabase(req)
-	if err == nil {
-		t.Log("Expected error for request with invalid operation type, got nil")
-	} else {
-		t.Failed()
+	if err != nil {
+		t.Errorf("Expected no error for request with invalid operation type, got: %v", err)
 	}
 }

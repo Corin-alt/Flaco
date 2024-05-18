@@ -2,14 +2,13 @@ package serveur
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
-	"log"
-	"net"
-
 	"flaco/grpc_and_go/flaco_grpc"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+	"log"
+	"net"
 )
 
 // Server struct represents the gRPC server
@@ -17,11 +16,12 @@ type Server struct {
 	flaco_grpc.UnimplementedDayServiceServer // Embedding the unimplemented server for forward compatibility
 }
 
-// CompletedDeviceInfo holds the information about devices and operations, including totals and failures
-type CompletedDeviceInfo struct {
-	Devices    []*flaco_grpc.Device // List of device data
-	NbTotalOp  int64                // Total number of operations
-	NbOpFailed int64                // Number of failed operations
+// DeviceStat struct holds statistics about device operations
+type DeviceStat struct {
+	DeviceName  string // Device name
+	NbTotalOp   int64  // Total number of operations
+	NbOpSuccess int64  // Number of successful operations
+	NbOpFailed  int64  // Number of failed operations
 }
 
 // SendDayInfoToServer processes the request from the client, stores data in the database, and returns a response
@@ -37,21 +37,28 @@ func (s *Server) SendDayInfoToServer(ctx context.Context, req *flaco_grpc.Reques
 func StoreToDatabase(req *flaco_grpc.Request) error {
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://root:root@localhost:27017/"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err) // Log and exit if database connection fails
 	}
-
-	completedDevice := CalculateValues(req) // Calculate the total and failed operations
+	defer func() {
+		if err = client.Disconnect(context.Background()); err != nil {
+			log.Fatal(err) // Log and exit if database disconnection fails
+		}
+	}()
 
 	println("[LOGS] => Storing information into database...")
 
+	statCollection := client.Database("flaco").Collection("StatByDevice")
+
 	// Store each device's information in the database
 	for _, deviceInfo := range req.GetDevice() {
+		statDevice := GetDeviceStat(deviceInfo)
 		for _, operation := range deviceInfo.Operation {
 			state := "FAILED"
 			if operation.HasSucceeded {
 				state = "SUCCESS"
 			}
 
+			// Insert operation details into a collection named after the device
 			coll := client.Database("flaco").Collection(deviceInfo.DeviceName)
 			_, err = coll.InsertOne(context.Background(), bson.M{
 				"type":  operation.Type,
@@ -61,40 +68,52 @@ func StoreToDatabase(req *flaco_grpc.Request) error {
 				return err // Return an error if insertion fails
 			}
 		}
-	}
 
-	// Store the calculated total and failed operations in the database
-	// Insert aggregate operation information into the database
-	collection := client.Database("flaco").Collection("OperationsInformation")
-	_, err = collection.InsertOne(context.Background(), bson.M{
-		"total":      completedDevice.NbTotalOp,
-		"successful": completedDevice.NbTotalOp - completedDevice.NbOpFailed,
-		"failed":     completedDevice.NbOpFailed,
-	})
-	if err != nil {
-		return err
+		// Update the statistics collection with the device's operations count
+		filter := bson.M{"name": statDevice.DeviceName}
+		update := bson.M{
+			"$inc": bson.M{
+				"total":      statDevice.NbTotalOp,
+				"successful": statDevice.NbOpSuccess,
+				"failed":     statDevice.NbOpFailed,
+			},
+			"$setOnInsert": bson.M{
+				"device": statDevice.DeviceName,
+			},
+		}
+		opts := options.Update().SetUpsert(true)
+
+		_, err = statCollection.UpdateOne(context.Background(), filter, update, opts)
+		if err != nil {
+			return err // Return an error if update fails
+		}
 	}
 
 	return nil
 }
 
-// CalculateValues calculates the total and failed operations from the request
-func CalculateValues(req *flaco_grpc.Request) *CompletedDeviceInfo {
+// GetDeviceStat calculates the statistics for a given device
+func GetDeviceStat(device *flaco_grpc.Device) *DeviceStat {
 	nbTotal := 0
 	nbFailed := 0
-	// Iterate over each device and its operations to count total and failed operations
-	for _, deviceInfo := range req.GetDevice() {
-		for _, operation := range deviceInfo.Operation {
-			if !operation.HasSucceeded {
-				nbFailed++ // Increment the failed operations count
-			}
-			nbTotal++ // Increment the total operations count
+	nbSuccess := 0
+
+	// Iterate over each operation of the device to count total, successful, and failed operations
+	for _, operation := range device.Operation {
+		if !operation.HasSucceeded {
+			nbFailed++ // Increment the failed operations count
+		} else {
+			nbSuccess++ // Increment the successful operations count
 		}
+		nbTotal++ // Increment the total operations count
 	}
-	return &CompletedDeviceInfo{
-		Devices:    req.GetDevice(), // List of devices from the request
-		NbOpFailed: int64(nbFailed), // Total number of failed operations
-		NbTotalOp:  int64(nbTotal),  // Total number of operations
+
+	// Return the calculated statistics for the device
+	return &DeviceStat{
+		DeviceName:  device.DeviceName,
+		NbOpSuccess: int64(nbSuccess),
+		NbOpFailed:  int64(nbFailed),
+		NbTotalOp:   int64(nbTotal),
 	}
 }
 
