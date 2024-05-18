@@ -36,8 +36,8 @@ go run main.go
 cd Code/
 
 # Run client test file
-go test tests/client_test.go
+go test client/client_test.go
 
 # Run server test file
-go test tests/serveur_test.go
+go test serveur/serveur_test.go
 ```

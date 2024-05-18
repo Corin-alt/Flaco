@@ -17,5 +17,7 @@ E
 client/client_test.go,2\8\28a1869372f198ed109508a84e68f6f1a44c492c
 G
 serveur/serveur_test.go,9\a\9a5816b2c7877dadd94310e35c8f142f583d80d7
-D
-tests/client_test.go,b\6\b625793bd51677b1d8c97f64605a3c44e0f6d63e
+6
+go.sum,5\a\5aa1ac64de2b0c4821af9393b44965020e4a521d
+K
+flaco_grpc/flaco_grpc.pb.go,9\c\9c341d2cb0ec0a105e2655b9e9a11a4c5450ae2b
