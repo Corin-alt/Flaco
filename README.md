@@ -5,8 +5,8 @@ Git of a GO project using GRPC in the RT0805 module of the Master DAS in Reims
 
 ## Authors
 
-- Dupont Corentin
-- Morlet Flavien
+- Corentin
+- Flavien
 
 
 ## Usage
